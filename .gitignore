@@ -1,0 +1,29 @@
+# Python 快取與編譯檔案
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虛擬環境
+.env
+.venv
+env/
+venv/
+ENV/
+*/venv/
+*/.env
+
+# SQLite 資料庫檔案
+*.db
+*.sqlite3
+
+# 機器人產生的簡報與圖片暫存目錄及檔案
+outputs/
+temp/
+*.pptx
+*.jpg
+*.png
+
+# 作業系統系統檔案
+.DS_Store
+Thumbs.db
