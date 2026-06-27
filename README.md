@@ -18,8 +18,10 @@
   * 串接 Gemini Imagen 3 圖片生成模型，提供 `/draw [比例] <描述>` 指令，支援 `1:1`、`16:9`、`9:16`、`4:3`、`3:4` 等多種長寬比。
 * **📂 [Lab 4: AI 圖像修改器](lab4_image_modifier)**
   * 上傳圖片至機器人，機器人會進入等待指令狀態，呼叫 Gemini 多模態與 Imagen 3 協同為您修改原圖並回傳。
-* **📂 [Lab 5: 個人隨手筆記本 (最終版)](lab5_note_taking)**
-  * 引入本機 SQLite 資料庫儲存個人筆記，並實作 `/addnote` 與 `/notes`。清單底部提供內聯按鈕（Inline Keyboard）非同步、無縫刪除個別筆記。此 Lab 為功能最完整的終極版本。
+* **📂 [Lab 5: 個人隨手筆記本](lab5_note_taking)**
+  * 引入本機 SQLite 資料庫儲存個人筆記，並實作 `/addnote` 與 `/notes`。清單底部提供內聯按鈕（Inline Keyboard）非同步、無縫刪除個別筆記。
+* **📂 [Lab 6: 語音轉譯與摘要筆記本 (最新整合版)](lab6_voice_summarizer)**
+  * 引入語音訊息監聽，使用 Gemini 原生多模態音訊引擎進行轉譯與重點摘要，支援獨立的 `voice_notes` 資料庫儲存，並提供 `/voicenotes` 列出清單以進行詳細檢視、重播及刪除。本 Lab 亦納入非同步 I/O 及資源洩漏防護之重構優化。
 
 ---
 
@@ -64,13 +66,14 @@ python bot.py
 
 ## <a name="english-summary"></a> English Summary
 
-This repository is a step-by-step tutorial and project series containing 5 independent labs for building a multi-functional Telegram Assistant Bot integrated with Google Gemini 3.5 Flash and Imagen 3.
+This repository is a step-by-step tutorial and project series containing 6 independent labs for building a multi-functional Telegram Assistant Bot integrated with Google Gemini 3.5 Flash and Imagen 3.
 
 * **📂 [Lab 1: Basic Bot](lab1_basic_bot)**: Basic setup, handles `/start`, `/help` and echoes messages.
 * **📂 [Lab 2: AI PPT Generator](lab2_ppt_generator)**: Generates PPT presentations (.pptx) based on a topic using Gemini 3.5 Flash and `python-pptx` (supports light/dark themes).
 * **📂 [Lab 3: AI Image Generator](lab3_image_generator)**: Generates high-quality images from prompts with custom aspect ratios (`1:1`, `16:9`, `9:16`, etc.) using Imagen 3.
 * **📂 [Lab 4: AI Image Modifier](lab4_image_modifier)**: Upload an image, send edit instructions, and get the modified image back using Gemini Multimodal and Imagen 3.
-* **📂 [Lab 5: Note-Taking (Final Version)](lab5_note_taking)**: Implements note-taking using SQLite database. Displays notes with inline keyboards for seamless delete callbacks. Includes all previous features.
+* **📂 [Lab 5: Note-Taking](lab5_note_taking)**: Implements note-taking using SQLite database. Displays notes with inline keyboards for seamless delete callbacks.
+* **📂 [Lab 6: Voice Transcription & Summarization (Latest Version)](lab6_voice_summarizer)**: Subscribes to voice messages, using Gemini's native multimodal audio engine for transcription and core summarization. Includes sqlite data model for voice notes, and `/voicenotes` management controls for detail viewing, voice replay, and deletion. Integrated with async I/O thread-pooling and strict resource-leak protections.
 
 ### Quick Start
 Rename `.env.example` to `.env` in the target lab directory, fill in your `TELEGRAM_BOT_TOKEN` and `GEMINI_API_KEY`, install dependencies using `pip install -r requirements.txt`, and run `python bot.py`.
