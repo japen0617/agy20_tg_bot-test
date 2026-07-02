@@ -618,6 +618,10 @@ async def generate_ppt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 filename=f"{topic}_{theme}.pptx",
                 caption=f"✅ 成功為您生成簡報！\n\n主題：{topic}\n風格主題：{theme.upper()}\n總頁數：{len(outline.slides)} 頁"
             )
+        try:
+            await status_message.delete()
+        except Exception:
+            pass
 
     except Exception as e:
         logger.exception("生成 PPT 時發生錯誤")
@@ -632,10 +636,6 @@ async def generate_ppt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 await asyncio.to_thread(os.remove, filename)
             except Exception as e:
                 logger.warning(f"刪除臨時簡報檔案失敗: {e}")
-        try:
-            await status_message.delete()
-        except Exception:
-            pass
 
 async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not client:
