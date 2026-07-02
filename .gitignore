@@ -27,3 +27,6 @@ temp/
 # 作業系統系統檔案
 .DS_Store
 Thumbs.db
+
+# Google Cloud Service Account Keys
+*gcp-key.json
