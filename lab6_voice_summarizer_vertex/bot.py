@@ -46,19 +46,26 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 IMAGEN_MODEL = os.getenv("IMAGEN_MODEL", "imagen-3.0-generate-002")
 
-# 初始化 Vertex AI Express Mode Client
+# 初始化 Vertex AI Client
 client = None
-if GEMINI_API_KEY:
-    try:
-        client = genai.Client(
-            vertexai=True,                # 啟用 Vertex AI 模式
-            api_key=GEMINI_API_KEY        # 傳入 API 金鑰 (在 Express Mode 中不可與 project/location 同時傳入)
-        )
-        logger.info("已使用 Vertex AI Express Mode 啟動 (使用 API 金鑰驗證)")
-    except Exception as e:
-        logger.exception(f"Vertex AI Express Mode 初始化失敗: {e}")
-else:
-    logger.warning("未偵測到 GEMINI_API_KEY，AI 功能將無法運作！")
+GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID", "little-shrimp")
+GCP_LOCATION = os.getenv("GCP_LOCATION", "us-central1")
+
+# 設定 GCP 服務帳戶金鑰路徑（若本地存在則自動載入）
+gcp_key_path = os.path.join(os.path.dirname(__file__), "gcp-key.json")
+if os.path.exists(gcp_key_path):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_key_path
+    logger.info("已偵測到本地 gcp-key.json，已將其設定為 GOOGLE_APPLICATION_CREDENTIALS")
+
+try:
+    client = genai.Client(
+        vertexai=True,                # 啟用 Vertex AI 模式
+        project=GCP_PROJECT_ID,       # GCP 專案 ID
+        location=GCP_LOCATION         # GCP 伺服器地區
+    )
+    logger.info(f"已使用 Vertex AI 服務帳戶模式啟動 (Project: {GCP_PROJECT_ID}, Location: {GCP_LOCATION})")
+except Exception as e:
+    logger.exception(f"Vertex AI 初始化失敗: {e}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
