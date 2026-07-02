@@ -46,20 +46,19 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 IMAGEN_MODEL = os.getenv("IMAGEN_MODEL", "imagen-3.0-generate-002")
 
-# 初始化 Vertex AI Client (使用 GCP 預設憑證 ADC)
+# 初始化 Vertex AI Express Mode Client
 client = None
-GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID", "little-shrimp")
-GCP_LOCATION = os.getenv("GCP_LOCATION", "us-central1")
-
-try:
-    client = genai.Client(
-        vertexai=True,                # 啟用 Vertex AI 模式
-        project=GCP_PROJECT_ID,       # GCP 專案 ID
-        location=GCP_LOCATION         # GCP 伺服器地區
-    )
-    logger.info(f"已使用 Vertex AI 模式啟動 (Project: {GCP_PROJECT_ID}, Location: {GCP_LOCATION})")
-except Exception as e:
-    logger.exception(f"Vertex AI 初始化失敗: {e}")
+if GEMINI_API_KEY:
+    try:
+        client = genai.Client(
+            vertexai=True,                # 啟用 Vertex AI 模式
+            api_key=GEMINI_API_KEY        # 傳入 API 金鑰 (在 Express Mode 中不可與 project/location 同時傳入)
+        )
+        logger.info("已使用 Vertex AI Express Mode 啟動 (使用 API 金鑰驗證)")
+    except Exception as e:
+        logger.exception(f"Vertex AI Express Mode 初始化失敗: {e}")
+else:
+    logger.warning("未偵測到 GEMINI_API_KEY，AI 功能將無法運作！")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
