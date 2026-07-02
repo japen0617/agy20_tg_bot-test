@@ -46,25 +46,25 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 IMAGEN_MODEL = os.getenv("IMAGEN_MODEL", "imagen-3.0-generate-002")
 
-# 初始化 Vertex AI Express Mode Client
+# 初始化 Vertex AI Client (使用 GCP 預設憑證 ADC)
 client = None
-if GEMINI_API_KEY:
-    GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID", "little-shrimp")
-    GCP_LOCATION = os.getenv("GCP_LOCATION", "us-central1")
+GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID", "little-shrimp")
+GCP_LOCATION = os.getenv("GCP_LOCATION", "us-central1")
+
+try:
     client = genai.Client(
-        vertexai=True,
-        api_key=GEMINI_API_KEY,
-        project=GCP_PROJECT_ID,
-        location=GCP_LOCATION
+        vertexai=True,                # 啟用 Vertex AI 模式
+        project=GCP_PROJECT_ID,       # GCP 專案 ID
+        location=GCP_LOCATION         # GCP 伺服器地區
     )
-    logger.info(f"已使用 Vertex AI Express Mode 啟動 (Project: {GCP_PROJECT_ID}, Location: {GCP_LOCATION})")
-else:
-    logger.warning("未偵測到 GEMINI_API_KEY，AI 功能將無法運作！")
+    logger.info(f"已使用 Vertex AI 模式啟動 (Project: {GCP_PROJECT_ID}, Location: {GCP_LOCATION})")
+except Exception as e:
+    logger.exception(f"Vertex AI 初始化失敗: {e}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
         f"哈囉 {update.effective_user.first_name}！我是您的 Telegram 智慧小助手 (Vertex AI 版)。🤖\n\n"
-        "目前已升級為 **Lab 6：語音轉譯與摘要功能 Vertex AI Express Mode 整合版 (最新版)**！\n"
+        "目前已升級為 **Lab 6：語音轉譯與摘要功能 Vertex AI 整合版 (最新版)**！\n"
         "您可以使用小助手來記錄日常隨手筆記、錄製語音筆記、產生簡報、繪製與修改圖片。\n\n"
         "🎙️ **語音筆記功能 (Lab 6)：**\n"
         "• 直接對我發送一個語音訊息，我會自動為您轉譯文字並撰寫摘要，且提供儲存按鈕。\n"
