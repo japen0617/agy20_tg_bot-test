@@ -616,7 +616,9 @@ async def generate_ppt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             await update.message.reply_document(
                 document=f,
                 filename=f"{topic}_{theme}.pptx",
-                caption=f"✅ 成功為您生成簡報！\n\n主題：{topic}\n風格主題：{theme.upper()}\n總頁數：{len(outline.slides)} 頁"
+                caption=f"✅ 成功為您生成簡報！\n\n主題：{topic}\n風格主題：{theme.upper()}\n總頁數：{len(outline.slides)} 頁",
+                read_timeout=60,
+                write_timeout=60
             )
         try:
             await status_message.delete()
@@ -682,7 +684,9 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     f"🎨 **AI 圖片生成完成！**\n\n"
                     f"📝 描述：{prompt_text}\n"
                     f"📐 比例：{aspect_ratio}"
-                )
+                ),
+                read_timeout=60,
+                write_timeout=60
             )
         await status_message.delete()
     except Exception as e:
