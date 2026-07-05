@@ -513,28 +513,53 @@ async def process_image_modification(update: Update, context: ContextTypes.DEFAU
         response = await asyncio.to_thread(client.models.generate_content, model=GEMINI_MODEL, contents=[img, prompt])
         detailed_prompt = response.text.strip()
         
-        await status_message.edit_text("🎨 圖像分析完成！正在使用 Imagen 3 生成修改後的圖片...")
+        await status_message.edit_text(f"🎨 圖像分析完成！正在使用 {IMAGEN_MODEL} 生成修改後的圖片...")
         
-        response_img = await asyncio.to_thread(
-            client.models.generate_images,
-            model=IMAGEN_MODEL,
-            prompt=detailed_prompt,
-            config=dict(number_of_images=1, output_mime_type="image/jpeg", aspect_ratio="1:1")
-        )
-        
-        if not response_img.generated_images:
-            raise Exception("Imagen API 沒有回傳任何圖片。")
-            
-        await status_message.edit_text("📤 圖片修改完成，正在上傳...")
-        for gen_img in response_img.generated_images:
-            image_bytes = gen_img.image.image_bytes
-            await update.message.reply_photo(
-                photo=io.BytesIO(image_bytes),
-                caption=(
-                    f"✨ **圖片修改完成！**\n\n"
-                    f"📝 修改指令：{user_instruction}"
+        if IMAGEN_MODEL.startswith("gemini-"):
+            response_img = await asyncio.to_thread(
+                client.models.generate_content,
+                model=IMAGEN_MODEL,
+                contents=detailed_prompt,
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE"],
+                    image_config=types.ImageConfig(
+                        aspect_ratio="1:1"
+                    )
                 )
             )
+            if not response_img.candidates or not response_img.candidates[0].content.parts:
+                raise Exception(f"{IMAGEN_MODEL} 沒有回傳任何內容。")
+            
+            image_bytes = None
+            for part in response_img.candidates[0].content.parts:
+                if part.inline_data and part.inline_data.mime_type.startswith("image/"):
+                    image_bytes = part.inline_data.data
+                    break
+            
+            if not image_bytes:
+                raise Exception("在 API 回傳內容中找不到修改後生成的圖片資料。")
+        else:
+            response_img = await asyncio.to_thread(
+                client.models.generate_images,
+                model=IMAGEN_MODEL,
+                prompt=detailed_prompt,
+                config=dict(number_of_images=1, output_mime_type="image/jpeg", aspect_ratio="1:1")
+            )
+            if not response_img.generated_images:
+                raise Exception(f"{IMAGEN_MODEL} 沒有回傳任何圖片。")
+            image_bytes = response_img.generated_images[0].image.image_bytes
+            
+        await status_message.edit_text("📤 圖片修改完成，正在上傳...")
+        await update.message.reply_photo(
+            photo=io.BytesIO(image_bytes),
+            caption=(
+                f"✨ **圖片修改完成！**\n\n"
+                f"📝 修改指令：{user_instruction}\n"
+                f"🤖 模型：{IMAGEN_MODEL}"
+            ),
+            read_timeout=60,
+            write_timeout=60
+        )
         
     except Exception as e:
         logger.exception("圖片修改過程中發生錯誤")
