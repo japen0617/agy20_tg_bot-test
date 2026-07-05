@@ -663,31 +663,56 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("❌ 請輸入有效的圖片描述！")
         return
 
-    status_message = await update.message.reply_text(f"⏳ 正在使用 Imagen 3 生成圖片...")
+    logger.info(f"收到生圖請求 - 比例: {aspect_ratio}, 描述: {prompt_text}")
+    status_message = await update.message.reply_text(f"⏳ 正在使用 {IMAGEN_MODEL} 生成圖片，請稍候...")
     try:
-        response = await asyncio.to_thread(
-            client.models.generate_images,
-            model=IMAGEN_MODEL,
-            prompt=prompt_text,
-            config=dict(number_of_images=1, output_mime_type="image/jpeg", aspect_ratio=aspect_ratio)
-        )
+        if IMAGEN_MODEL.startswith("gemini-"):
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=IMAGEN_MODEL,
+                contents=prompt_text,
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE"],
+                    image_config=types.ImageConfig(
+                        aspect_ratio=aspect_ratio
+                    )
+                )
+            )
+            if not response.candidates or not response.candidates[0].content.parts:
+                raise Exception(f"{IMAGEN_MODEL} 沒有回傳任何內容。")
+            
+            image_bytes = None
+            for part in response.candidates[0].content.parts:
+                if part.inline_data and part.inline_data.mime_type.startswith("image/"):
+                    image_bytes = part.inline_data.data
+                    break
+            
+            if not image_bytes:
+                raise Exception("在 API 回傳內容中找不到生成的圖片資料。")
+        else:
+            response = await asyncio.to_thread(
+                client.models.generate_images,
+                model=IMAGEN_MODEL,
+                prompt=prompt_text,
+                config=dict(number_of_images=1, output_mime_type="image/jpeg", aspect_ratio=aspect_ratio)
+            )
 
-        if not response.generated_images:
-            raise Exception("Imagen API 沒有回傳任何圖片。")
+            if not response.generated_images:
+                raise Exception(f"{IMAGEN_MODEL} 沒有回傳任何圖片。")
+            image_bytes = response.generated_images[0].image.image_bytes
 
         await status_message.edit_text("📤 圖片生成成功，正在上傳...")
-        for gen_img in response.generated_images:
-            image_bytes = gen_img.image.image_bytes
-            await update.message.reply_photo(
-                photo=io.BytesIO(image_bytes),
-                caption=(
-                    f"🎨 **AI 圖片生成完成！**\n\n"
-                    f"📝 描述：{prompt_text}\n"
-                    f"📐 比例：{aspect_ratio}"
-                ),
-                read_timeout=60,
-                write_timeout=60
-            )
+        await update.message.reply_photo(
+            photo=io.BytesIO(image_bytes),
+            caption=(
+                f"🎨 **AI 圖片生成完成！**\n\n"
+                f"📝 描述：{prompt_text}\n"
+                f"📐 比例：{aspect_ratio}\n"
+                f"🤖 模型：{IMAGEN_MODEL}"
+            ),
+            read_timeout=60,
+            write_timeout=60
+        )
         await status_message.delete()
     except Exception as e:
         logger.exception("生成圖片時發生錯誤")
