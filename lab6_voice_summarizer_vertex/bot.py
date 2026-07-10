@@ -14,6 +14,7 @@ from telegram.ext import (
     CallbackQueryHandler,
     filters,
 )
+from telegram.request import HTTPXRequest
 from google import genai
 from google.genai import types
 from PIL import Image
@@ -771,7 +772,8 @@ def main() -> None:
         logger.error("錯誤：請確認已在 .env 檔案中設定 TELEGRAM_BOT_TOKEN！")
         return
 
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    request = HTTPXRequest(connect_timeout=30.0, read_timeout=30.0)
+    application = ApplicationBuilder().token(BOT_TOKEN).request(request).build()
 
     # 註冊指令與處理器
     application.add_handler(CommandHandler("start", start))
