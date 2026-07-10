@@ -564,11 +564,15 @@ async def process_image_modification(update: Update, context: ContextTypes.DEFAU
             image_bytes = response_img.generated_images[0].image.image_bytes
             
         await status_message.edit_text("📤 圖片修改完成，正在上傳...")
+        display_instruction = user_instruction
+        if len(display_instruction) > 800:
+            display_instruction = display_instruction[:800] + "..."
+
         await update.message.reply_photo(
             photo=io.BytesIO(image_bytes),
             caption=(
                 f"✨ **圖片修改完成！**\n\n"
-                f"📝 修改指令：{user_instruction}\n"
+                f"📝 修改指令：{display_instruction}\n"
                 f"🤖 模型：{IMAGEN_MODEL}"
             ),
             read_timeout=60,
@@ -741,11 +745,15 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             image_bytes = response.generated_images[0].image.image_bytes
 
         await status_message.edit_text("📤 圖片生成成功，正在上傳...")
+        display_prompt = prompt_text
+        if len(display_prompt) > 800:
+            display_prompt = display_prompt[:800] + "..."
+
         await update.message.reply_photo(
             photo=io.BytesIO(image_bytes),
             caption=(
                 f"🎨 **AI 圖片生成完成！**\n\n"
-                f"📝 描述：{prompt_text}\n"
+                f"📝 描述：{display_prompt}\n"
                 f"📐 比例：{aspect_ratio}\n"
                 f"🤖 模型：{IMAGEN_MODEL}"
             ),
