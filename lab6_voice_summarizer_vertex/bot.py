@@ -49,23 +49,36 @@ IMAGEN_MODEL = os.getenv("IMAGEN_MODEL", "imagen-3.0-generate-002")
 # 初始化 Vertex AI Client
 client = None
 GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID", "little-shrimp")
-GCP_LOCATION = os.getenv("GCP_LOCATION", "us-central1")
+GCP_LOCATION = os.getenv("GCP_LOCATION", "global")
 
-# 設定 GCP 服務帳戶金鑰路徑（若本地存在則自動載入）
-gcp_key_path = os.path.join(os.path.dirname(__file__), "gcp-key.json")
-if os.path.exists(gcp_key_path):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_key_path
-    logger.info("已偵測到本地 gcp-key.json，已將其設定為 GOOGLE_APPLICATION_CREDENTIALS")
+# 1. 如果有設定 GEMINI_API_KEY 且為 Vertex AI API 金鑰 (以 AQ. 開頭)，優先使用金鑰模式
+if GEMINI_API_KEY and GEMINI_API_KEY.startswith("AQ."):
+    try:
+        # Vertex AI Express 金鑰模式下，不能設定 project/location，由金鑰本身自動對接專案
+        client = genai.Client(
+            vertexai=True,
+            api_key=GEMINI_API_KEY
+        )
+        logger.info("已成功以 Vertex AI API 金鑰模式 (AQ. 憑證) 啟動 Client")
+    except Exception as e:
+        logger.exception(f"使用 Vertex AI API 金鑰啟動失敗: {e}")
 
-try:
-    client = genai.Client(
-        vertexai=True,                # 啟用 Vertex AI 模式
-        project=GCP_PROJECT_ID,       # GCP 專案 ID
-        location=GCP_LOCATION         # GCP 伺服器地區
-    )
-    logger.info(f"已使用 Vertex AI 服務帳戶模式啟動 (Project: {GCP_PROJECT_ID}, Location: {GCP_LOCATION})")
-except Exception as e:
-    logger.exception(f"Vertex AI 初始化失敗: {e}")
+# 2. 否則，使用本地 gcp-key.json 服務帳戶模式
+else:
+    gcp_key_path = os.path.join(os.path.dirname(__file__), "gcp-key.json")
+    if os.path.exists(gcp_key_path):
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_key_path
+        logger.info("已偵測到本地 gcp-key.json，已將其設定為 GOOGLE_APPLICATION_CREDENTIALS")
+    
+    try:
+        client = genai.Client(
+            vertexai=True,                # 啟用 Vertex AI 模式
+            project=GCP_PROJECT_ID,       # GCP 專案 ID
+            location=GCP_LOCATION         # GCP 伺服器地區
+        )
+        logger.info(f"已使用 Vertex AI 服務帳戶模式啟動 (Project: {GCP_PROJECT_ID}, Location: {GCP_LOCATION})")
+    except Exception as e:
+        logger.exception(f"Vertex AI 初始化失敗: {e}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
